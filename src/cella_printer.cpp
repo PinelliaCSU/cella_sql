@@ -55,6 +55,8 @@ namespace cella
                 return 7;
             case CELLA_Expr::Kind::UNARY:
                 return 6;
+            case CELLA_Expr::Kind::IS_NULL:
+                return 3;
             case CELLA_Expr::Kind::BINARY:
                 switch (e.bop)
                 {
@@ -134,6 +136,10 @@ namespace cella
                     exprToStringMin(*e.right, p + 1);
                 break;
             }
+            case CELLA_Expr::Kind::IS_NULL:
+                // minPrec=4：子节点为比较等低优先级时加括号
+                s = exprToStringMin(*e.child, 4) + (e.negated ? " IS NOT NULL" : " IS NULL");
+                break;
             }
             if (exprPrec(e) < minPrec)
                 s = "(" + s + ")";

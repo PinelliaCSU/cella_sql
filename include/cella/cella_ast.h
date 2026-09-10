@@ -30,7 +30,8 @@ namespace cella
             LITERAL,
             COLUMN_REF,
             UNARY,
-            BINARY
+            BINARY,
+            IS_NULL // IS [NOT] NULL 谓词
         };
         enum class UnOp
         {
@@ -66,12 +67,13 @@ namespace cella
         std::string table; // 可空；非空表示 表名.列名
         std::string column;
 
-        // UNARY / BINARY
+        // UNARY / BINARY / IS_NULL
         UnOp uop = UnOp::NEG;
         BinOp bop = BinOp::EQ;
+        bool negated = false;              // IS_NULL：true = IS NOT NULL，false = IS NULL
         std::unique_ptr<CELLA_Expr> left;  // BINARY 左子树
         std::unique_ptr<CELLA_Expr> right; // BINARY 右子树
-        std::unique_ptr<CELLA_Expr> child; // UNARY 子树
+        std::unique_ptr<CELLA_Expr> child; // UNARY / IS_NULL 子树
     };
 
     // ---------------- 结构 ----------------
@@ -137,6 +139,7 @@ namespace cella
         n->text = e.text;
         n->num = e.num;
         n->boolVal = e.boolVal;
+        n->negated = e.negated;
         n->table = e.table;
         n->column = e.column;
         n->uop = e.uop;

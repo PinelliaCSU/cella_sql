@@ -5,3 +5,16 @@ CreateTable
 Project [name]
   Filter (age > 18 AND score < 90)
     SeqScan [student]
+
+Insert
+  table: student
+  columns: id, name, age, score
+  rows: [1, 'Alice', 20, NULL]
+
+Project [name]
+  Filter (age > 18 AND score IS NULL)
+    SeqScan [student]
+
+Project [name]
+  Filter (score IS NOT NULL AND age = 20)
+    SeqScan [student]

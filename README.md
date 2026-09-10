@@ -230,6 +230,8 @@ Project [name]
 | `+ - * /` | 任一侧非数值（如 `18 + 'abc'`） | 报 SEM-309 |
 | 比较 | 数值-数值 / 字符串-字符串 / 日期-日期 / BOOL-BOOL | BOOL |
 | 比较 | 跨族（如 INT 与 VARCHAR） | 报 SEM-309 |
+| 比较 | 任一侧 NULL（如 `score < NULL`） | 报 SEM-313 |
+| `IS [NOT] NULL` | 操作数任意类型 | BOOL |
 | `AND`/`OR` | 两侧必须 BOOL | BOOL |
 | `NOT` | 操作数必须 BOOL | BOOL |
 | 一元 `-` | 操作数必须数值 | 数值 |
@@ -258,6 +260,7 @@ Project [name]
 | 语义 | SEM-310 | 条件表达式必须为 BOOL |
 | 语义 | SEM-311 | 分页参数必须为正整数（page 页码/每页行数） |
 | 语义 | SEM-312 | 分页与 among 冲突（起始行超出 among 限定范围） |
+| 语义 | SEM-313 | NULL 不能参与比较运算（请用 IS NULL / IS NOT NULL） |
 | 计划 | PLN-401 | 不支持的语句类型（防御性） |
 
 ## 测试
@@ -266,10 +269,10 @@ Project [name]
 powershell -ExecutionPolicy Bypass -File tests\run_tests.ps1
 ```
 
-- 正向（`ok_*.sql`，11 个）：`-a -s -p` 退出码必须为 0，且 `-p` 输出与 `tests/expected/ok_*_plan.txt` golden 完全一致。
+- 正向（`ok_*.sql`，12 个）：`-a -s -p` 退出码必须为 0，且 `-p` 输出与 `tests/expected/ok_*_plan.txt` golden 完全一致。
 - 优化（`ok_opt_*.sql`）：额外比对 `-o` 输出与 `tests/expected/ok_opt_*_opt.txt`。
-- 负向（`err_*.sql`，16 个）：`--all` 退出码必须为 1，且输出包含首行注释 `-- expect: 错误码` 声明的错误码。
-- 覆盖点：缺分号、未闭合字符串、非法字符、未定义表、列拼写错误、类型不匹配（INSERT/运算/条件）、值个数不一致、重复建表、重复列名、保留字作标识符、limit 列不存在、NULL→NOT NULL、大小写混合、空输入、join/union/distinct/grouped/having/ordered/among、UPDATE/DROP TABLE、优化规则 golden。
+- 负向（`err_*.sql`，18 个）：`--all` 退出码必须为 1，且输出包含首行注释 `-- expect: 错误码` 声明的错误码。
+- 覆盖点：缺分号、未闭合字符串、非法字符、未定义表、列拼写错误、类型不匹配（INSERT/运算/条件）、值个数不一致、重复建表、重复列名、保留字作标识符、limit 列不存在、NULL→NOT NULL、NULL 参与比较（SEM-313）、IS NULL/IS NOT NULL、大小写混合、空输入、join/union/distinct/grouped/having/ordered/among、UPDATE/DROP TABLE、优化规则 golden。
 - 捕获方式：通过 `cmd` 重定向取原始字节再按 UTF-8 读取，避免控制台代码页造成乱码。
 
 ## 实现决策与偏差说明
@@ -282,5 +285,5 @@ powershell -ExecutionPolicy Bypass -File tests\run_tests.ps1
 6. 诊断统一输出到 stdout（任务书要求“统一走一条输出通道”）。
 7. v2 新增（与 guide.md 对照补齐）：表达式类型系统（SEM-309/310）、计划优化器（常量折叠/布尔化简/恒真 Filter 消除，`-o` 展示前后对比）、`==` 运算符、`grammar.md` 文法文档。
 8. 标准 `SELECT...FROM...WHERE` 语法不做兼容（用户确认仅 cella 方言）。
-9. `--halt`、`--format=sexpr|json`、`IS NULL`、指数记数法、DECIMAL、Fuzz 测试为规格可选项，未实现。
+9. `--halt`、`--format=sexpr|json`、指数记数法、DECIMAL、Fuzz 测试为规格可选项，未实现（`IS NULL`/`IS NOT NULL` 已随 v3.7 实现）。
 10. 文件头部的 UTF-8 BOM 会被词法器自动跳过；行尾兼容 CRLF/LF。

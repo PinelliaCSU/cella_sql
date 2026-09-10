@@ -40,6 +40,18 @@ namespace cella
             return e;
         }
 
+        std::unique_ptr<CELLA_Expr> makeIsNull(bool negated, const CELLA_Token &t,
+                                               std::unique_ptr<CELLA_Expr> child)
+        {
+            auto e = std::make_unique<CELLA_Expr>();
+            e->kind = CELLA_Expr::Kind::IS_NULL;
+            e->line = t.line;
+            e->col = t.col;
+            e->negated = negated;
+            e->child = std::move(child);
+            return e;
+        }
+
         class CELLA_ParserImpl
         {
         public:
@@ -798,6 +810,16 @@ namespace cella
                         op = CELLA_Expr::BinOp::GE;
                         hasOp = true;
                     }
+                }
+                if (!hasOp && matchKw(CELLA_Keyword::IS))
+                {
+                    const CELLA_Token &isTok = toks[pos - 1];
+                    bool neg = false;
+                    if (matchKw(CELLA_Keyword::NOT))
+                        neg = true;
+                    if (!expectKw(CELLA_KW_NULL))
+                        return nullptr;
+                    return makeIsNull(neg, isTok, std::move(l));
                 }
                 if (!hasOp)
                     return l;

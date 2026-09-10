@@ -114,6 +114,19 @@ namespace cella
             if (e.kind == CELLA_Expr::Kind::LITERAL || e.kind == CELLA_Expr::Kind::COLUMN_REF)
                 return cella_cloneExpr(e);
 
+            if (e.kind == CELLA_Expr::Kind::IS_NULL)
+            {
+                // IS [NOT] NULL 不参与常量折叠，仅递归优化子表达式
+                auto child = optimizeExpr(*e.child, hits);
+                auto n = std::make_unique<CELLA_Expr>();
+                n->kind = CELLA_Expr::Kind::IS_NULL;
+                n->line = e.line;
+                n->col = e.col;
+                n->negated = e.negated;
+                n->child = std::move(child);
+                return n;
+            }
+
             if (e.kind == CELLA_Expr::Kind::UNARY)
             {
                 auto child = optimizeExpr(*e.child, hits);

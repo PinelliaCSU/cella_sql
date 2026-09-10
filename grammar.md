@@ -88,7 +88,7 @@ expr        := or_expr ;
 or_expr     := and_expr { OR and_expr } ;
 and_expr    := not_expr { AND not_expr } ;
 not_expr    := NOT not_expr | comparison ;
-comparison  := add [ ( '=' | '==' | '!=' | '<>' | '<' | '<=' | '>' | '>=' ) add ] ;
+comparison  := add [ ( '=' | '==' | '!=' | '<>' | '<' | '<=' | '>' | '>=' ) add | IS [ NOT ] NULL ] ;
 add         := mul { ( '+' | '-' ) mul } ;
 mul         := unary { ( '*' | '/' ) unary } ;
 unary       := '-' unary | primary ;
@@ -104,6 +104,7 @@ const_expr  := NUMBER | STRING | DATE | NULL | TRUE | FALSE ;
 2. 算术层次：`-`(一元) > `*` `/` > `+` `-`；同层左结合。
 3. 逻辑层次：比较 > `NOT` > `AND` > `OR`。
 4. `(` `)` 可改变结合；`==` 与 `=` 等价（EQ），`<>` 与 `!=` 等价（NE）。
+5. `IS [ NOT ] NULL` 谓词作用于 `add` 操作数（与比较同级）；`(a = b) is null` 需用括号。
 
 ## 5. 表达式类型系统（语义阶段）
 
@@ -113,7 +114,8 @@ const_expr  := NUMBER | STRING | DATE | NULL | TRUE | FALSE ;
 | `+ - * /` | 任一侧非数值 | 报 SEM-309 |
 | 比较 | 数值-数值 / 字符串-字符串 / 日期-日期 / BOOL-BOOL | BOOL |
 | 比较 | 跨族（如 INT 与 VARCHAR） | 报 SEM-309 |
-| 比较 | 任一侧 NULL | BOOL（合法） |
+| 比较 | 任一侧 NULL（如 `score < NULL`） | 报 SEM-313 |
+| `IS [NOT] NULL` | 操作数任意类型 | BOOL |
 | `AND` / `OR` | 两侧必须 BOOL | BOOL |
 | `NOT` | 操作数必须 BOOL | BOOL |
 | 一元 `-` | 操作数必须数值 | 数值 |
@@ -133,7 +135,8 @@ const_expr  := NUMBER | STRING | DATE | NULL | TRUE | FALSE ;
   `CELLA_OrderItem{col,asc}`。
 - 表达式 `CELLA_Expr`（tagged struct，含 `line/col`）：
   `LiteralExpr{lit,text,num,boolVal}`、`ColumnRefExpr{table?,column}`、
-  `UnaryExpr{uop∈{NEG,NOT},child}`、`BinaryExpr{bop∈{EQ,NE,LT,LE,GT,GE,PLUS,MINUS,MUL,DIV,AND,OR},left,right}`。
+  `UnaryExpr{uop∈{NEG,NOT},child}`、`BinaryExpr{bop∈{EQ,NE,LT,LE,GT,GE,PLUS,MINUS,MUL,DIV,AND,OR},left,right}`、
+  `IsNullExpr{negated,child}`（`IS [NOT] NULL` 谓词）。
 - 每个节点携带源位置（行:列，1 起），供语义错误与诊断定位。
 
 ## 7. Plan 节点结构
@@ -158,6 +161,6 @@ const_expr  := NUMBER | STRING | DATE | NULL | TRUE | FALSE ;
 |---|---|
 | statement | CREATE, INSERT, GET, DELETE, UPDATE, DROP |
 | expr / or / and / not | NOT, IDENTIFIER, CONST, `(`, `-` |
-| comparison 之后 | `= == != <> < <= > >=` |
+| comparison 之后 | `= == != <> < <= > >= IS` |
 | select_list | `*`, NOT, IDENTIFIER, CONST, `(`, `-` |
 | get 子句序 | IN → (LEFT/RIGHT/MIDDLE/JOIN)* → LIMIT → GROUPED → HAVING → ORDERED → AMONG → PAGE → UNION → `;` |

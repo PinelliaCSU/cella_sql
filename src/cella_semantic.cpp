@@ -328,6 +328,14 @@ namespace cella
                 }
                 break;
             }
+            case CELLA_Expr::Kind::IS_NULL:
+            {
+                // IS [NOT] NULL 可作用于任意类型子表达式，结果为 BOOL
+                if (!resolveExpr(*e.child, scope, cat, errors))
+                    return false;
+                t = CELLA_ValueType::BOOL;
+                break;
+            }
             case CELLA_Expr::Kind::BINARY:
             {
                 CELLA_ValueType lt, rt;
@@ -364,11 +372,20 @@ namespace cella
                     break;
                 default: // 比较运算
                 {
+                    // NULL 为特殊存在，不能参与任何比较（请用 IS NULL / IS NOT NULL）
+                    if (lt == CELLA_ValueType::NULL_T || rt == CELLA_ValueType::NULL_T)
+                    {
+                        errors.push_back(cella_makeError(
+                            CELLA_Phase::SEM, "SEM-313", e.line, e.col,
+                            "操作符 '" + binOpText(e.bop) + "' 不能应用于 " + valueTypeName(lt) +
+                                " 与 " + valueTypeName(rt) +
+                                "：NULL 不能参与比较运算，请使用 IS NULL / IS NOT NULL"));
+                        return false;
+                    }
                     bool ok = (isNumericType(lt) && isNumericType(rt)) ||
                               (isStringType(lt) && isStringType(rt)) ||
                               (isDateTimeType(lt) && isDateTimeType(rt)) ||
-                              (lt == CELLA_ValueType::BOOL && rt == CELLA_ValueType::BOOL) ||
-                              lt == CELLA_ValueType::NULL_T || rt == CELLA_ValueType::NULL_T;
+                              (lt == CELLA_ValueType::BOOL && rt == CELLA_ValueType::BOOL);
                     if (!ok)
                     {
                         errors.push_back(cella_makeError(
