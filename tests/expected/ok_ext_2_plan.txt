@@ -1,0 +1,19 @@
+CreateTable
+  table: student
+  columns: id INT, name VARCHAR(255), age INT
+
+Insert
+  table: student
+  columns: id, name, age
+  rows: [1, 'Alice', 20]
+
+Update
+  table: student
+  sets: age = 21, name = 'Alicia'
+  SeqScan [student]
+
+Project [id, name, age]
+  SeqScan [student]
+
+DropTable
+  table: student

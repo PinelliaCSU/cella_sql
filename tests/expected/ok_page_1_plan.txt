@@ -1,0 +1,22 @@
+CreateTable
+  table: student
+  columns: id INT, name VARCHAR(255), age INT
+
+Page (page 2, size 5, offset 5)
+  Sort (age DESC)
+    Project [name]
+      SeqScan [student]
+
+Page (page 3, size 10, offset 20)
+  Project [name]
+    SeqScan [student]
+
+Page (page 1, size 2, offset 0)
+  Project [name]
+    Filter (age > 18)
+      SeqScan [student]
+
+Page (page 2, size 5, offset 5)
+  Limit (10)
+    Project [name]
+      SeqScan [student]

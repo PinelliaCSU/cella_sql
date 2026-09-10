@@ -1,0 +1,14 @@
+CreateTable
+  table: student
+  columns: id INT, name VARCHAR(255), cid INT
+
+CreateTable
+  table: course
+  columns: id INT, title VARCHAR(255)
+
+Limit (10)
+  Sort (s.name ASC)
+    Project [s.name, c.title]
+      Join (middle on s.cid = c.id)
+        SeqScan [student s]
+        SeqScan [course c]

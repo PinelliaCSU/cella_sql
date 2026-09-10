@@ -1,0 +1,19 @@
+CreateTable
+  table: student
+  columns: id INT, name VARCHAR(255), age INT
+
+Project [name]
+  Filter (1 = 1 AND age > 10 + 8)
+    SeqScan [student]
+
+Project [name]
+  Filter (name = 'Alice' AND TRUE)
+    SeqScan [student]
+
+Project [name]
+  Filter (1 = 1)
+    SeqScan [student]
+
+Project [name]
+  Filter (2 = 3)
+    SeqScan [student]

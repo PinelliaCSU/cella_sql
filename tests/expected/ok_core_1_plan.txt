@@ -1,0 +1,15 @@
+CreateTable
+  table: student
+  columns: id INT, name VARCHAR(255), age INT
+
+Insert
+  table: student
+  columns: id, name, age
+  rows: [1, 'Alice', 20]
+
+Project [id, name]
+  Filter (age > 18)
+    SeqScan [student]
+
+Delete (filter: id = 1)
+  SeqScan [student]

@@ -1,0 +1,27 @@
+CreateTable
+  table: student
+  columns: id INT, name VARCHAR(255), age INT, class VARCHAR(255)
+
+Insert
+  table: student
+  columns: id, name, age, class
+  rows: [1, 'Alice', 20, 'A'], [2, 'Bob', 19, 'A'], [3, 'Carol', 22, 'B']
+
+Limit (5)
+  Sort (class ASC)
+    Distinct
+      Project [class]
+        SeqScan [student]
+
+Project [class]
+  Filter (class = 'A')
+    Aggregate (grouped: class)
+      SeqScan [student]
+
+Union
+  Project [name]
+    Filter (age > 20)
+      SeqScan [student]
+  Project [name]
+    Filter (age < 19)
+      SeqScan [student]

@@ -1,0 +1,3 @@
+-- expect: SEM-302
+CREATE TABLE t(id INT);
+CREATE TABLE t(id INT);

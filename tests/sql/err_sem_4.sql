@@ -1,0 +1,3 @@
+-- expect: SEM-305
+CREATE TABLE t(id INT, name VARCHAR);
+INSERT INTO t VALUES (1);

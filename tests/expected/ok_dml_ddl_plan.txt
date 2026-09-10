@@ -1,0 +1,8 @@
+CreateTable
+  table: course
+  columns: id INT, title VARCHAR(50), credit FLOAT, begin_date DATE
+
+Insert
+  table: course
+  columns: id, title, credit, begin_date
+  rows: [1, 'DB', 3.5, '2024-02-20']
